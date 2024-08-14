@@ -25,6 +25,21 @@ El **filtrado colaborativo** es una de las técnicas más populares y efectivas 
 * **Problema de Arranque en Frío:** Difícil recomendar para nuevos usuarios o ítems sin datos históricos.
 * **Escalabilidad:** Puede ser intensivo en recursos para grandes conjuntos de datos.
 
+#### Primer resultado colaborativo:
+
+Recomendaciones para el usuario 1:
+MovieID
+1815    0.686704
+3607    0.320836
+1843    0.308668
+3779    0.283266
+3164    0.276903
+1107    0.237804
+3172    0.232779
+2198    0.231318
+2251    0.222257
+3233    0.210442
+
 ### 2. Filtrado Basado en Contenido
 
 El **filtrado basado en contenido** utiliza las características de los ítems para hacer recomendaciones. Analiza los atributos de los ítems que el usuario ha evaluado positivamente y recomienda ítems con características similares.
