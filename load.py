@@ -8,6 +8,6 @@ users = pd.read_csv(path + '/ml-1m/users.dat', sep='::', names=['UserID', 'Gende
 movies = pd.read_csv(path + '/ml-1m/movies.dat', sep='::', names=['MovieID', 'Title', 'Genres'], engine='python', encoding='ISO-8859-1')
 
 # Mostrar una parte de los datos para verificar
-print(ratings.head())
-print(users.head())
-print(movies.head())
+# print(ratings.head())
+# print(users.head())
+# print(movies.head())
