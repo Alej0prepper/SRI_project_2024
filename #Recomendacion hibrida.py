@@ -23,19 +23,21 @@ def obtener_recomendaciones_unificadas_por_movieid(*dataframes_de_recomendacione
 
     return recomendaciones_finales_df
 
-user_id = 1
-crop = 10
+user_id = 50
+crop = 100
 
 # Obtener recomendaciones de diferentes métodos
 recomendaciones_colaborativo_items = Get_movies_by_colaborative(user_id).head(crop)
 recomendaciones_contenido = Get_movies_by_content(user_id).head(crop)
 recomendaciones_conocimiento = Get_movies_by_knowledge(user_id).head(crop)
-recomendaciones_demografia = Get_movies_by_demography(user_id).head(crop)
+recomendaciones_demografia = Get_movies_by_demography(user_id)
 
 print(recomendaciones_colaborativo_items)
 print(recomendaciones_conocimiento)
 print(recomendaciones_contenido)
 print(recomendaciones_demografia)
+print("filas de demografia")
+print(len(recomendaciones_demografia))
 # Obtener la recomendación unificada
 recomendaciones_finales_df = obtener_recomendaciones_unificadas_por_movieid(
     recomendaciones_colaborativo_items,

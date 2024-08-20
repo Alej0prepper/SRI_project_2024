@@ -37,7 +37,7 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     similarity_df = similarity_df.drop(index=watched_movies, errors='ignore')
     
     # Obtener las películas más similares (las más recomendadas)
-    recommended_movies = similarity_df.sort_values(by='Similarity', ascending=False).head(n_recommendations)
+    recommended_movies = similarity_df.sort_values(by='Similarity', ascending=False)
     
     # Unir las recomendaciones con los títulos de las películas y géneros
     recommended_movies = pd.merge(recommended_movies, movies[['MovieID', 'Title']], left_index=True, right_on='MovieID')

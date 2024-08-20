@@ -6,7 +6,7 @@ from load import *
 def get_favorite_genre(user_id, ratings, movies):
     user_ratings = ratings[ratings['UserID'] == user_id]
     merged_data = pd.merge(user_ratings, movies, on='MovieID')
-    high_rated = merged_data[merged_data['Rating'] >= 4.0]  # Filtrar las calificaciones altas
+    high_rated = merged_data[merged_data['Rating'] >= 3.0]  # Filtrar las calificaciones altas
     favorite_genre = high_rated['Genres'].str.split('|').explode().mode()[0]  # Encontrar el género más frecuente
     return favorite_genre
 

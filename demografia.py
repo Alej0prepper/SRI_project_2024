@@ -37,7 +37,7 @@ print(genre_preference_by_occupation)
 # Mostrar el resultado
 print(genre_preference_by_age)
 
-def recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_preference_by_age, genre_preference_by_occupation):
+def recommend_by_age_and_occupation(user_id, users=users, ratings_users=ratings_users, genre_preference_by_age=genre_preference_by_age, genre_preference_by_occupation=genre_preference_by_occupation):
     # Obtener la información del usuario
     user_info = users[users['UserID'] == user_id].iloc[0]
     user_age = user_info['Age']
@@ -61,16 +61,18 @@ def recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_
     return genre_recommendations[['Title', 'Genres','MovieID']].drop_duplicates(), combined_genres
 
 # Probar el sistema de recomendación basado en edad y ocupación
-user_id = 1  # Reemplazar con un ID de usuario válido
-recommended_movies, combined_genres = recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_preference_by_age, genre_preference_by_occupation)
+# user_id = 1  # Reemplazar con un ID de usuario válido
+# recommended_movies, combined_genres = recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_preference_by_age, genre_preference_by_occupation)
 
-# Imprimir las recomendaciones personalizadas
-print(f"Recomendaciones para el usuario {user_id} basadas en su grupo de edad y ocupación:")
-print(recommended_movies)
+# # Imprimir las recomendaciones personalizadas
+# print(f"Recomendaciones para el usuario {user_id} basadas en su grupo de edad y ocupación:")
+# print(recommended_movies)
 
 # Imprimir los géneros combinados que fueron utilizados para la recomendación
-print(f"\nGéneros considerados en la recomendación: {', '.join(combined_genres)}")
+# print(f"\nGéneros considerados en la recomendación: {', '.join(combined_genres)}")
 
 def Get_movies_by_demography(user_id):
     recommended_movies, combined_genres = recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_preference_by_age, genre_preference_by_occupation)
     return recommended_movies
+
+print(Get_movies_by_demography(1))
