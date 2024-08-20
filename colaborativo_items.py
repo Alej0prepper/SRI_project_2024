@@ -58,4 +58,19 @@ sorted_ratings = user_ratings.sort_values(ascending=False)
 
 # Mostrar las principales recomendaciones
 print(f"Recomendaciones para el usuario {user_id}:")
-print(sorted_ratings.head(10))  # Las 10 mejores recomendaciones
+print(sorted_ratings)  # Las  mejores recomendaciones
+
+def Get_movies_by_colaborative(user_id):
+    # Obtener las calificaciones predichas para este usuario
+    user_ratings = predicted_ratings_df.loc[user_id]
+
+    # Ordenar las películas según la calificación predicha
+    sorted_ratings = user_ratings.sort_values(ascending=False)
+
+    # Convertir sorted_ratings en un DataFrame con 'MovieID' y 'Rating'
+    recomendaciones_df = pd.DataFrame({
+        'MovieID': sorted_ratings.index,
+        'Rating': sorted_ratings.values
+    })
+
+    return recomendaciones_df

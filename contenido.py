@@ -51,12 +51,16 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     
     recommended_movies['Reason'] = recommended_movies.apply(get_influential_genres, axis=1)
     
-    return recommended_movies[['Title', 'Similarity', 'Reason']]
+    return recommended_movies[['Title', 'Similarity', 'Reason', 'MovieID']]
 
 # Probar el sistema de recomendación para un usuario específico
 user_id = 1
-recommended_movies = recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
+# recommended_movies_content = recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
 
 # Mostrar las recomendaciones con las razones
-print(f"Recomendaciones para el usuario {user_id}:")
-print(recommended_movies)
+# print(f"Recomendaciones para el usuario {user_id}:")
+# print(recommended_movies_content)
+
+def Get_movies_by_content(user_id):
+    return recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
+

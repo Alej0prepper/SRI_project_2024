@@ -43,7 +43,7 @@ def recommend_by_demographics(user_id, users, ratings, movies):
     watched_movie_ids = ratings[ratings['UserID'] == user_id]['MovieID']
     recommendations = movies[~movies['MovieID'].isin(watched_movie_ids)]
     genre_recommendations = recommendations[recommendations['Genres'].str.contains('|'.join(preferred_genres))]
-    
+    print(genre_recommendations[['Title', 'Genres']].drop_duplicates().type())
     # Devolver las películas recomendadas con sus géneros
     return genre_recommendations[['Title', 'Genres']].drop_duplicates()
 

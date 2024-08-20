@@ -58,7 +58,7 @@ def recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_
     genre_recommendations = recommendations[recommendations['Genres'].str.contains('|'.join(combined_genres))]
     
     # Devolver las películas recomendadas con sus géneros
-    return genre_recommendations[['Title', 'Genres']].drop_duplicates(), combined_genres
+    return genre_recommendations[['Title', 'Genres','MovieID']].drop_duplicates(), combined_genres
 
 # Probar el sistema de recomendación basado en edad y ocupación
 user_id = 1  # Reemplazar con un ID de usuario válido
@@ -70,3 +70,7 @@ print(recommended_movies)
 
 # Imprimir los géneros combinados que fueron utilizados para la recomendación
 print(f"\nGéneros considerados en la recomendación: {', '.join(combined_genres)}")
+
+def Get_movies_by_demography(user_id):
+    recommended_movies, combined_genres = recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_preference_by_age, genre_preference_by_occupation)
+    return recommended_movies
