@@ -23,8 +23,8 @@ def obtener_recomendaciones_unificadas_por_movieid(*dataframes_de_recomendacione
 
     return recomendaciones_finales_df
 
-user_id = 50
-crop = 100
+user_id = 1
+crop = 200
 
 # Obtener recomendaciones de diferentes métodos
 recomendaciones_colaborativo_items = Get_movies_by_colaborative(user_id).head(crop)

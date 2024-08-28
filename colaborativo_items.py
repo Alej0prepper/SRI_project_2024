@@ -1,76 +1,73 @@
-# Filtrado colaborativo basado en items
-from load import *
-from sklearn.metrics.pairwise import cosine_similarity
+from load import ratings, movies, users  # Importa los DataFrames de ratings, movies y users
 import numpy as np
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
 
-# Crear la matriz de calificaciones (usuarios x películas)
-rating_matrix = ratings.pivot_table(index='UserID', columns='MovieID', values='Rating').fillna(0)
+class CollaborativeFilteringWithClustering:
+    def __init__(self, ratings, movies, n_clusters=5):
+        # Guardar los DataFrames y el número de clústeres
+        self.ratings = ratings
+        self.movies = movies
+        self.n_clusters = n_clusters
 
-# Mostrar la matriz de calificaciones
-print(rating_matrix.head())
-# Calcular la similitud entre ítems (películas)
-item_similarity = cosine_similarity(rating_matrix.T)
+        # Crear la matriz de calificaciones (usuarios x películas)
+        self.rating_matrix = self.ratings.pivot_table(index='UserID', columns='MovieID', values='Rating')
 
-# Convertir la matriz de similitud en un DataFrame para facilitar su uso
-item_similarity_df = pd.DataFrame(item_similarity, index=rating_matrix.columns, columns=rating_matrix.columns)
+        # Aplicar clustering a los ítems (películas)
+        self.kmeans = KMeans(n_clusters=self.n_clusters, random_state=42)
+        self.item_clusters = self.kmeans.fit_predict(self.rating_matrix.T.fillna(0))  # Usamos 0 solo para clustering, no en el análisis
+        
+        # Añadir la información de clúster a la matriz de calificaciones
+        self.rating_matrix_clustered = pd.DataFrame(self.rating_matrix.T)
+        self.rating_matrix_clustered['Cluster'] = self.item_clusters
+        
+        # Crear una matriz de similitud por cada clúster
+        self.cluster_similarity = {}
+        for cluster in range(self.n_clusters):
+            cluster_items = self.rating_matrix_clustered[self.rating_matrix_clustered['Cluster'] == cluster].index
+            cluster_ratings = self.rating_matrix[cluster_items].fillna(0)  # Temporalmente reemplazamos NaN para calcular la similitud
+            if not cluster_ratings.empty:
+                item_similarity = cosine_similarity(cluster_ratings.T)
+                self.cluster_similarity[cluster] = pd.DataFrame(item_similarity, index=cluster_items, columns=cluster_items)
+        
+        # Calcular las calificaciones predichas
+        self.predicted_ratings = self.predict_ratings_with_clustering()
 
-# Mostrar la matriz de similitud
-print(item_similarity_df.head())
-
-
-def predict_ratings(ratings, similarity, dynamic_weight=True):
-    # # Inicializar una matriz para las predicciones
-    # pred = np.zeros(ratings.shape)
-    # # Para cada usuario, predecir la calificación para cada película
-    # for i in range(ratings.shape[0]):
-    #     print(ratings.shape[0])
-    #     # Promedio ponderado por similitud
-    #     pred[i, :] = similarity.dot(ratings.iloc[i, :]) / np.abs(similarity).sum(axis=1)
-
-     # Calcular la media de las calificaciones por usuario
-     # Calcular la media de las calificaciones por usuario
-    user_mean = ratings.mean(axis=1)
+    def predict_ratings_with_clustering(self):
+        pred = np.zeros(self.rating_matrix.shape)
+        
+        for cluster, similarity_matrix in self.cluster_similarity.items():
+            cluster_items = similarity_matrix.columns
+            if len(cluster_items) > 0:
+                user_means = self.rating_matrix[cluster_items].mean(axis=1, skipna=True).values.reshape(-1, 1)
+                ratings_demeaned = self.rating_matrix[cluster_items].sub(user_means, axis=0)
+                
+                # Manejo de NaN: aseguramos que no contribuyan al cálculo
+                similarity_sum = np.abs(similarity_matrix).sum(axis=1)
+                similarity_sum[similarity_sum == 0] = 1  # Evitar división por 0
+                pred[:, self.rating_matrix.columns.get_indexer(cluster_items)] = user_means + (similarity_matrix.dot(ratings_demeaned.fillna(0).T).T / similarity_sum)
     
-    # Restar la media de cada usuario para centrar las calificaciones
-    ratings_demeaned = ratings.sub(user_mean, axis=0)
-    
-    pred = user_mean[:, np.newaxis] + (similarity.dot(ratings_demeaned.T).T / np.abs(similarity).sum(axis=1))
-    
-    return pred
+        # Manejo de NaN en las predicciones: Si un valor sigue siendo NaN, mantenemos NaN o lo manejamos según sea necesario
+        pred_df = pd.DataFrame(pred, index=self.rating_matrix.index, columns=self.rating_matrix.columns)
+        pred_df = pred_df.where(~self.rating_matrix.isna(), self.rating_matrix)  # Si el valor original era NaN, mantenlo como NaN
+        
+        return pred_df
 
-# Calcular las calificaciones predichas
-predicted_ratings = predict_ratings(rating_matrix, item_similarity_df)
+    def get_recommendations(self, user_id, top_n=200):
+        user_ratings = self.predicted_ratings.loc[user_id]
+        sorted_ratings = user_ratings.sort_values(ascending=False).head(top_n)
+        recomendaciones_df = pd.DataFrame({'MovieID': sorted_ratings.index, 'Rating': sorted_ratings.values})
+        recomendaciones_df = recomendaciones_df.merge(self.movies[['MovieID', 'Title', 'Genres']], on='MovieID', how='left')
+        return recomendaciones_df
 
-# Convertir la matriz predicha en un DataFrame para facilitar su uso
-predicted_ratings_df = pd.DataFrame(predicted_ratings, index=rating_matrix.index, columns=rating_matrix.columns)
-
-# Mostrar las primeras filas de las calificaciones predichas
-print(predicted_ratings_df.head())
-
-# Definir un ID de usuario para hacer recomendaciones
-user_id = 1
-
-# Obtener las calificaciones predichas para este usuario
-user_ratings = predicted_ratings_df.loc[user_id]
-
-# Ordenar las películas según la calificación predicha
-sorted_ratings = user_ratings.sort_values(ascending=False)
-
-# Mostrar las principales recomendaciones
-print(f"Recomendaciones para el usuario {user_id}:")
-print(sorted_ratings)  # Las  mejores recomendaciones
+# Ejemplo de uso en el mismo archivo
+if __name__ == "__main__":
+    collaborative_filtering = CollaborativeFilteringWithClustering(ratings, movies)
+    user_id = 1
+    print(f"Recomendaciones para el usuario {user_id}:")
+    print(collaborative_filtering.get_recommendations(user_id))
 
 def Get_movies_by_colaborative(user_id):
-    # Obtener las calificaciones predichas para este usuario
-    user_ratings = predicted_ratings_df.loc[user_id]
-
-    # Ordenar las películas según la calificación predicha
-    sorted_ratings = user_ratings.sort_values(ascending=False)
-
-    # Convertir sorted_ratings en un DataFrame con 'MovieID' y 'Rating'
-    recomendaciones_df = pd.DataFrame({
-        'MovieID': sorted_ratings.index,
-        'Rating': sorted_ratings.values
-    })
-
-    return recomendaciones_df
+    collaborative_filtering = CollaborativeFilteringWithClustering(ratings, movies)
+    return collaborative_filtering.get_recommendations(user_id)
