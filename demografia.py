@@ -1,78 +1,57 @@
-#Recomendacion basada en demografia 2
-
 import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
 from load import *
 
-#
+# Convertir los géneros en un formato binario para cada película
+movies['Genres'] = movies['Genres'].str.split('|')
+movies = movies.explode('Genres')
+movies = pd.get_dummies(movies, columns=['Genres'], prefix='', prefix_sep='')
+
+movies = movies.drop_duplicates(subset=['MovieID'])
+
+# Crear la matriz de géneros (MovieID como índice y géneros como columnas)
+movie_genres = movies.set_index('MovieID').drop(columns=['Title'])
 
 # Unir las tablas ratings y users
 ratings_users = pd.merge(ratings, users, on='UserID')
 
-# Unir con la tabla de movies para tener los géneros
-ratings_users_movies = pd.merge(ratings_users, movies, on='MovieID')
+# Crear el perfil de usuario basado en demografía
+user_profiles = pd.get_dummies(users, columns=['Gender', 'Age', 'Occupation'])
 
-# Mostrar las primeras filas para verificar
-print(ratings_users_movies.head())
+# Aplicar clustering a los usuarios basados en sus características demográficas
+n_clusters = 5  # Puedes ajustar el número de clústeres según sea necesario
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+user_profiles['Cluster'] = kmeans.fit_predict(user_profiles.drop(columns=['UserID', 'Zip-code']))
 
-# Explode los géneros para que cada género tenga su propia fila
-ratings_users_movies['Genres'] = ratings_users_movies['Genres'].str.split('|')
-ratings_users_movies = ratings_users_movies.explode('Genres')
-
-# Calcular la media de las calificaciones para cada género dentro de cada grupo de edad
-genre_preference_by_age = ratings_users_movies.groupby(['Age', 'Genres'])['Rating'].mean().reset_index()
-
-# Ordenar por grupo de edad y calificación promedio para encontrar los géneros más preferidos
-genre_preference_by_age = genre_preference_by_age.sort_values(['Age', 'Rating'], ascending=[True, False])
-
-# Calcular la media de las calificaciones para cada género dentro de cada grupo de ocupación
-genre_preference_by_occupation = ratings_users_movies.groupby(['Occupation', 'Genres'])['Rating'].mean().reset_index()
-
-# Ordenar por grupo de ocupación y calificación promedio para encontrar los géneros más preferidos
-genre_preference_by_occupation = genre_preference_by_occupation.sort_values(['Occupation', 'Rating'], ascending=[True, False])
-
-# Mostrar el resultado
-print(genre_preference_by_occupation)
-
-
-# Mostrar el resultado
-print(genre_preference_by_age)
-
-def recommend_by_age_and_occupation(user_id, users=users, ratings_users=ratings_users, genre_preference_by_age=genre_preference_by_age, genre_preference_by_occupation=genre_preference_by_occupation):
-    # Obtener la información del usuario
-    user_info = users[users['UserID'] == user_id].iloc[0]
-    user_age = user_info['Age']
-    user_occupation = user_info['Occupation']
+def recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies):
+    # Identificar el clúster del usuario
+    user_cluster = user_profiles.loc[user_profiles['UserID'] == user_id, 'Cluster'].values[0]
     
-    # Obtener los géneros más preferidos para el grupo de edad del usuario
-    top_genres_age = genre_preference_by_age[genre_preference_by_age['Age'] == user_age]['Genres'].head(3).tolist()
+    # Filtrar las películas calificadas por usuarios en el mismo clúster
+    cluster_users = user_profiles[user_profiles['Cluster'] == user_cluster]['UserID']
+    cluster_ratings = ratings_users[ratings_users['UserID'].isin(cluster_users)]
     
-    # Obtener los géneros más preferidos para el grupo de ocupación del usuario
-    top_genres_occupation = genre_preference_by_occupation[genre_preference_by_occupation['Occupation'] == user_occupation]['Genres'].head(3).tolist()
+    # Calcular el promedio de calificaciones por película dentro del clúster
+    movie_scores = cluster_ratings.groupby('MovieID')['Rating'].mean()
     
-    # Combinar los géneros preferidos de ambos grupos (edad y ocupación)
-    combined_genres = list(set(top_genres_age + top_genres_occupation))
+    # Filtrar películas que el usuario ya ha visto
+    watched_movies = ratings_users[ratings_users['UserID'] == user_id]['MovieID']
+    movie_scores = movie_scores[~movie_scores.index.isin(watched_movies)]
     
-    # Filtrar películas no vistas y que coincidan con los géneros preferidos
-    watched_movie_ids = ratings_users_movies[ratings_users_movies['UserID'] == user_id]['MovieID']
-    recommendations = movies[~movies['MovieID'].isin(watched_movie_ids)]
-    genre_recommendations = recommendations[recommendations['Genres'].str.contains('|'.join(combined_genres))]
+    # Ordenar todas las películas por el promedio de calificaciones y devolver todas las no vistas
+    recommended_movies = movie_scores.sort_values(ascending=False).index
+    recommended_movies_df = movies[movies['MovieID'].isin(recommended_movies)]
     
-    # Devolver las películas recomendadas con sus géneros
-    return genre_recommendations[['Title', 'Genres','MovieID']].drop_duplicates(), combined_genres
+    return recommended_movies_df[['MovieID', 'Title']]
 
-# Probar el sistema de recomendación basado en edad y ocupación
-# user_id = 1  # Reemplazar con un ID de usuario válido
-# recommended_movies, combined_genres = recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_preference_by_age, genre_preference_by_occupation)
+# Probar el sistema de recomendación para un usuario específico
+user_id = 1
+recommended_movies = recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies)
 
-# # Imprimir las recomendaciones personalizadas
-# print(f"Recomendaciones para el usuario {user_id} basadas en su grupo de edad y ocupación:")
-# print(recommended_movies)
-
-# Imprimir los géneros combinados que fueron utilizados para la recomendación
-# print(f"\nGéneros considerados en la recomendación: {', '.join(combined_genres)}")
+# Mostrar las recomendaciones
+print(f"Recomendaciones para el usuario {user_id}:")
+print(recommended_movies)
 
 def Get_movies_by_demography(user_id):
-    recommended_movies, combined_genres = recommend_by_age_and_occupation(user_id, users, ratings_users_movies, genre_preference_by_age, genre_preference_by_occupation)
-    return recommended_movies
-
-print(Get_movies_by_demography(1))
+    return recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies)
