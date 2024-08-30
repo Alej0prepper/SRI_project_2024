@@ -39,19 +39,29 @@ def recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies
     watched_movies = ratings_users[ratings_users['UserID'] == user_id]['MovieID']
     movie_scores = movie_scores[~movie_scores.index.isin(watched_movies)]
     
-    # Ordenar todas las películas por el promedio de calificaciones y devolver todas las no vistas
-    recommended_movies = movie_scores.sort_values(ascending=False).index
-    recommended_movies_df = movies[movies['MovieID'].isin(recommended_movies)]
+    # Ordenar todas las películas por el promedio de calificaciones
+    recommended_movies = movie_scores.sort_values(ascending=False)
+    recommended_movies_df = movies[movies['MovieID'].isin(recommended_movies.index)]
     
-    return recommended_movies_df[['MovieID', 'Title']]
+    # Añadir la columna de puntuación
+    recommended_movies_df = recommended_movies_df.set_index('MovieID')
+    recommended_movies_df['Score'] = recommended_movies
+    
+    return recommended_movies_df[['Title', 'Score']].reset_index()
 
 # Probar el sistema de recomendación para un usuario específico
 user_id = 1
 recommended_movies = recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies)
 
 # Mostrar las recomendaciones
-print(f"Recomendaciones para el usuario {user_id}:")
-print(recommended_movies)
+# print(f"Recomendaciones para el usuario {user_id}:")
+# print(recommended_movies)
 
 def Get_movies_by_demography(user_id):
-    return recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies)
+    # Call the demographic-based recommendation function
+    recommendations_df = recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies)
+    
+    # Convert to dictionary {MovieID: Score}
+    recommendations_dict = pd.Series(recommendations_df['Score'].values, index=recommendations_df['MovieID']).to_dict()
+    
+    return recommendations_dict

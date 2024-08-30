@@ -68,6 +68,11 @@ if __name__ == "__main__":
     print(f"Recomendaciones para el usuario {user_id}:")
     print(collaborative_filtering.get_recommendations(user_id))
 
-def Get_movies_by_colaborative(user_id):
+def get_movies_by_collaborative(user_id):
     collaborative_filtering = CollaborativeFilteringWithClustering(ratings, movies)
-    return collaborative_filtering.get_recommendations(user_id)
+    recommendations_df = collaborative_filtering.get_recommendations(user_id)
+
+    # Convert the DataFrame to a dictionary {MovieID: Similarity}
+    recommendations_dict = pd.Series(recommendations_df['Rating'].values, index=recommendations_df['MovieID']).to_dict()
+    
+    return recommendations_dict

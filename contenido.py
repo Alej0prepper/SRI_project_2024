@@ -41,8 +41,7 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     
     # Unir las recomendaciones con los títulos de las películas y géneros
     recommended_movies = pd.merge(recommended_movies, movies[['MovieID', 'Title']], left_index=True, right_on='MovieID')
-    print("herre")
-    print(recommended_movies)
+    # print(recommended_movies)
     # Identificar los géneros que influyeron en la recomendación
     def get_influential_genres(row):
         influential_genres = movie_genres.loc[row['MovieID']] > 0  # Identificar géneros presentes en la película
@@ -54,7 +53,7 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     return recommended_movies[['Title', 'Similarity', 'Reason', 'MovieID']]
 
 # Probar el sistema de recomendación para un usuario específico
-user_id = 1
+# user_id = 1
 # recommended_movies_content = recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
 
 # Mostrar las recomendaciones con las razones
@@ -62,5 +61,10 @@ user_id = 1
 # print(recommended_movies_content)
 
 def Get_movies_by_content(user_id):
-    return recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
-
+    # Call the content-based recommendation function
+    recommendations_df = recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
+    
+    # Convert the DataFrame to a dictionary {MovieID: Similarity}
+    recommendations_dict = pd.Series(recommendations_df['Similarity'].values, index=recommendations_df['MovieID']).to_dict()
+    
+    return recommendations_dict

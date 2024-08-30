@@ -44,8 +44,8 @@ movies_clustered, kmeans_model = apply_clustering(movies)
 user_id = 1
 recommended_movies = recommend_by_genre_and_cluster(user_id, ratings, movies_clustered, kmeans_model)
 
-print(f"Recomendaciones para el usuario {user_id} basadas en el género favorito y clúster correspondiente:")
-print(recommended_movies)
+# print(f"Recomendaciones para el usuario {user_id} basadas en el género favorito y clúster correspondiente:")
+# print(recommended_movies)
 
 def Get_movies_by_knowledge(user_id):
     return recommend_by_genre_and_cluster(user_id, ratings, movies_clustered, kmeans_model)

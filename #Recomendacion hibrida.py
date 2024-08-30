@@ -66,4 +66,4 @@ recomendaciones_completas = pd.merge(recomendaciones_completas, recomendaciones_
 recomendaciones_completas.to_excel("recomendaciones_completas_con_origen.xlsx", index=False)
 
 # Mostrar las recomendaciones con título, género, cantidad de apariciones y origen de la recomendación
-print(recomendaciones_completas[['MovieID', 'Title', 'Genres', 'Count', 'Recomendado_Por']])
+# print(recomendaciones_completas[['MovieID', 'Title', 'Genres', 'Count', 'Recomendado_Por']])
