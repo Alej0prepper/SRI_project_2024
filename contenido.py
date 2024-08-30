@@ -37,12 +37,11 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     similarity_df = similarity_df.drop(index=watched_movies, errors='ignore')
     
     # Obtener las películas más similares (las más recomendadas)
-    recommended_movies = similarity_df.sort_values(by='Similarity', ascending=False).head(n_recommendations)
+    recommended_movies = similarity_df.sort_values(by='Similarity', ascending=False)
     
     # Unir las recomendaciones con los títulos de las películas y géneros
     recommended_movies = pd.merge(recommended_movies, movies[['MovieID', 'Title']], left_index=True, right_on='MovieID')
-    print("herre")
-    print(recommended_movies)
+    # print(recommended_movies)
     # Identificar los géneros que influyeron en la recomendación
     def get_influential_genres(row):
         influential_genres = movie_genres.loc[row['MovieID']] > 0  # Identificar géneros presentes en la película
@@ -51,12 +50,21 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     
     recommended_movies['Reason'] = recommended_movies.apply(get_influential_genres, axis=1)
     
-    return recommended_movies[['Title', 'Similarity', 'Reason']]
+    return recommended_movies[['Title', 'Similarity', 'Reason', 'MovieID']]
 
 # Probar el sistema de recomendación para un usuario específico
-user_id = 1
-recommended_movies = recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
+# user_id = 1
+# recommended_movies_content = recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
 
 # Mostrar las recomendaciones con las razones
-print(f"Recomendaciones para el usuario {user_id}:")
-print(recommended_movies)
+# print(f"Recomendaciones para el usuario {user_id}:")
+# print(recommended_movies_content)
+
+def Get_movies_by_content(user_id):
+    # Call the content-based recommendation function
+    recommendations_df = recommend_movies(user_id, user_profiles, movie_genres, ratings, movies)
+    
+    # Convert the DataFrame to a dictionary {MovieID: Similarity}
+    recommendations_dict = pd.Series(recommendations_df['Similarity'].values, index=recommendations_df['MovieID']).to_dict()
+    
+    return recommendations_dict
