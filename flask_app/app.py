@@ -1,15 +1,18 @@
+import math
 import os
 import sys
-import csv
 from flask import Flask, request, jsonify
-import math
+from flask_cors import CORS
 import pandas as pd
+import time
+import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from recommendation_system.load import movies
 from recommendation_system.weighted_hybrid_system import weighted_hybrid_recommendations
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # File paths for the .dat files
 USER_DATA_FILE = 'ml-1m/users.dat'
@@ -46,6 +49,7 @@ def handle_users():
     
     if request.method == 'POST':
         data = request.json
+        print(data)
         new_user = {
             'UserID': str(len(users) + 1),  # Auto-increment UserID
             'Gender': data['gender'],
@@ -59,6 +63,24 @@ def handle_users():
     
     if request.method == 'GET':
         return jsonify(users), 200
+    
+@app.route('/ratings/<int:user_id>/<int:movie_id>', methods=['GET'])
+def get_rating_for_user_movie(user_id, movie_id):
+    headers = ['UserID', 'MovieID', 'Rating', 'Timestamp']
+    ratings = read_data_from_file(RATING_DATA_FILE, headers)
+    
+    # Find the specific rating by user_id and movie_id
+    rating = next((r for r in ratings if int(r['UserID']) == user_id and int(r['MovieID']) == movie_id), None)
+    
+    if rating is None:
+        return jsonify({"error": "Rating not found"}), 404
+    
+    return jsonify({
+        'UserID': rating['UserID'],
+        'MovieID': rating['MovieID'],
+        'Rating': rating['Rating'],
+        'Timestamp': rating['Timestamp']
+    }), 200
 
 @app.route('/users/<int:user_id>', methods=['GET', 'PUT', 'DELETE'])
 def handle_user(user_id):
@@ -99,53 +121,58 @@ def handle_ratings():
     
     if request.method == 'POST':
         data = request.json
+
+        # Generate a random timestamp within the past 5 years if not provided
+        random_timestamp = str(random.randint(int(time.time()) - 5 * 365 * 24 * 60 * 60, int(time.time())))
+        
         new_rating = {
             'UserID': str(data['user_id']),
             'MovieID': str(data['movie_id']),
             'Rating': str(data['rating']),
-            'Timestamp': str(data['timestamp'])
+            'Timestamp': str(random_timestamp)
         }
+        
         ratings.append(new_rating)
         write_data_to_file(RATING_DATA_FILE, headers, ratings)
-        return jsonify({"message": "Rating created"}), 201
+        return jsonify({"message": "Rating created", "timestamp": new_rating['Timestamp']}), 201
     
     if request.method == 'GET':
         return jsonify(ratings), 200
 
-@app.route('/ratings/<int:rating_id>', methods=['GET', 'PUT', 'DELETE'])
-def handle_rating(rating_id):
+@app.route('/ratings/<int:user_id>/<int:movie_id>', methods=['PUT'])
+def handle_rating(user_id, movie_id):
     headers = ['UserID', 'MovieID', 'Rating', 'Timestamp']
     ratings = read_data_from_file(RATING_DATA_FILE, headers)
-    rating = next((r for r in ratings if int(r['UserID']) == rating_id), None)
+    rating = next((r for r in ratings if int(r['UserID']) == user_id and int(r['MovieID']) == movie_id), None)
     
     if rating is None:
         return jsonify({"error": "Rating not found"}), 404
     
-    if request.method == 'GET':
-        return jsonify(rating), 200
     
     if request.method == 'PUT':
         data = request.json
-        rating['MovieID'] = str(data.get('movie_id', rating['MovieID']))
         rating['Rating'] = str(data.get('rating', rating['Rating']))
-        rating['Timestamp'] = str(data.get('timestamp', rating['Timestamp']))
         write_data_to_file(RATING_DATA_FILE, headers, ratings)
         return jsonify({"message": "Rating updated"}), 200
-    
-    if request.method == 'DELETE':
-        ratings = [r for r in ratings if int(r['UserID']) != rating_id]
-        write_data_to_file(RATING_DATA_FILE, headers, ratings)
-        return jsonify({"message": "Rating deleted"}), 200
+
 
 @app.route('/recommendations/<int:user_id>', methods=['GET'])
 def get_recommendations(user_id):
     recommendations = weighted_hybrid_recommendations(user_id)
 
-    recommendations_df = pd.DataFrame(recommendations, columns=['MovieID', 'Score'])
+    valid_recommendations = [(item_id, score) for item_id, score in recommendations if not math.isnan(score)]
+    
+    top_recommendations = sorted(valid_recommendations, key=lambda x: x[1], reverse=True)[:10]
+    
+    recommendations_df = pd.DataFrame(top_recommendations, columns=['MovieID', 'Score'])
 
     movie_headers = ['MovieID', 'Title', 'Genres']
     movie_data = read_data_from_file(MOVIE_DATA_FILE, movie_headers)
     movies_df = pd.DataFrame(movie_data)
+
+    recommendations_df['MovieID'] = recommendations_df['MovieID'].astype(str)
+    
+    movies_df['MovieID'] = movies_df['MovieID'].astype(str)
     
     recommendations_with_titles = recommendations_df.merge(movies_df, on='MovieID', how='left')
 
@@ -155,5 +182,6 @@ def get_recommendations(user_id):
         'Score': row['Score']
     } for _, row in recommendations_with_titles.iterrows()])
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
