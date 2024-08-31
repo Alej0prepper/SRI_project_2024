@@ -155,9 +155,46 @@ def handle_rating(user_id, movie_id):
         return jsonify({"message": "Rating updated"}), 200
 
 
+cold_start_focus = {
+    'collaborative': 0.2,
+    'content': 0.4,
+    'demographic': 0.4
+}
+big_amount_of_users = {
+    'collaborative': 0.7,
+    'content': 0.3,
+    'demographic': 0.2
+}
+balanced = {
+    'collaborative': 0.33,
+    'content': 0.33,
+    'demographic': 0.33
+}
+
 @app.route('/recommendations/<int:user_id>', methods=['GET'])
 def get_recommendations(user_id):
-    recommendations = weighted_hybrid_recommendations(user_id)
+    headers = ['UserID', 'MovieID', 'Rating', 'Timestamp']
+    ratings = read_data_from_file(RATING_DATA_FILE, headers)
+    user_ratings = [r for r in ratings if int(r['UserID']) == user_id]
+    
+    if len(user_ratings) < 5: 
+        strategy = 'cold_start'
+    elif len(ratings) > 10000:
+        strategy = 'large_user_base'
+    else:
+        strategy = 'balanced'
+    
+    if strategy == 'cold_start':
+        weights = cold_start_focus
+    elif strategy == 'large_user_base':
+        weights = big_amount_of_users
+    else:
+        weights = balanced
+
+    recommendations = weighted_hybrid_recommendations(
+        user_id, 
+        weights
+    )
 
     valid_recommendations = [(item_id, score) for item_id, score in recommendations if not math.isnan(score)]
     
@@ -170,7 +207,6 @@ def get_recommendations(user_id):
     movies_df = pd.DataFrame(movie_data)
 
     recommendations_df['MovieID'] = recommendations_df['MovieID'].astype(str)
-    
     movies_df['MovieID'] = movies_df['MovieID'].astype(str)
     
     recommendations_with_titles = recommendations_df.merge(movies_df, on='MovieID', how='left')
