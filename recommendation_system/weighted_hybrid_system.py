@@ -1,23 +1,15 @@
-import math
-import pandas as pd
-from recommendation_system.load import movies
 from recommendation_system.colaborativo_items import get_movies_by_collaborative
 from recommendation_system.contenido import Get_movies_by_content
 from recommendation_system.demografia import Get_movies_by_demography
 
-WEIGHTS = {
-    'collaborative': 0.5,
-    'content': 0.3,
-    'demographic': 0.2
-}
-
-def weighted_hybrid_recommendations(user_id):
+def weighted_hybrid_recommendations(user_id, weights):
     """
     Generates movie recommendations for a user by combining collaborative, content-based, 
     and demographic recommendation scores using a weighted hybrid approach.
 
     Param:
     - user_id (int): The ID of the user to generate recommendations for.
+    - weights (dict): A dictionary with weights for 'collaborative', 'content', and 'demographic'.
 
     Returns:
     - list: A sorted list of tuples, where each tuple contains a MovieID and its combined score, 
@@ -35,9 +27,9 @@ def weighted_hybrid_recommendations(user_id):
         demo_score = demographic_scores.get(item, 0)
 
         combined_scores[item] = (
-            WEIGHTS['collaborative'] * float(collab_score) +
-            WEIGHTS['content'] * float(content_score) +
-            WEIGHTS['demographic'] * float(demo_score)
+            weights.get('collaborative', 0.5) * float(collab_score) +
+            weights.get('content', 0.3) * float(content_score) +
+            weights.get('demographic', 0.2) * float(demo_score)
         )
 
     sorted_items = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)
