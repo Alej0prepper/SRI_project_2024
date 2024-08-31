@@ -49,7 +49,6 @@ def handle_users():
     
     if request.method == 'POST':
         data = request.json
-        print(data)
         new_user = {
             'UserID': str(len(users) + 1),  # Auto-increment UserID
             'Gender': data['gender'],
