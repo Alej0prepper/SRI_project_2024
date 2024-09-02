@@ -1,6 +1,6 @@
-from recommendation_system.colaborativo_items import get_movies_by_collaborative
-from recommendation_system.contenido import Get_movies_by_content
-from recommendation_system.demografia import Get_movies_by_demography
+from recommendation_system.collaborative_by_items import get_movies_by_collaborative
+from recommendation_system.content import Get_movies_by_content
+from recommendation_system.demography import Get_movies_by_demography
 
 def weighted_hybrid_recommendations(user_id, weights):
     """
