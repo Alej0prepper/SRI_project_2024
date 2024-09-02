@@ -195,6 +195,8 @@ def get_recommendations(user_id):
         user_id, 
         weights
     )
+    if len(recommendations) == 0:
+        return  []
 
     valid_recommendations = [(item_id, score) for item_id, score in recommendations if not math.isnan(score)]
     

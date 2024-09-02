@@ -15,12 +15,26 @@ def weighted_hybrid_recommendations(user_id, weights):
     - list: A sorted list of tuples, where each tuple contains a MovieID and its combined score, 
       sorted by score in descending order.
     """
-    collaborative_scores = get_movies_by_collaborative(user_id)
-    content_scores = Get_movies_by_content(user_id)
-    demographic_scores = Get_movies_by_demography(user_id)
+    try:
+        collaborative_scores = get_movies_by_collaborative(user_id)
+    except:
+        print("Can't get collaborative recommendations for user")
+        collaborative_scores = dict()
+    
+    try:
+        content_scores = Get_movies_by_content(user_id)
+    except:
+        print("Can't get content recommendations for user")
+        content_scores = dict()
+
+    try:
+        demographic_scores = Get_movies_by_demography(user_id)
+    except:
+        print("Can't get demographic recommendations for user")
+        demographic_scores = dict()
+    
 
     combined_scores = {}
-
     for item in set(collaborative_scores.keys()).union(content_scores.keys(), demographic_scores.keys()):
         collab_score = collaborative_scores.get(item, 0)
         content_score = content_scores.get(item, 0)
