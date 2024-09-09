@@ -19,6 +19,17 @@ El informe explora las limitaciones de los enfoques tradicionales y resalta las 
 - Casos de estudio: Amazon, Netflix, Spotify, LinkedIn e investigación académica.
 - Desafíos e implementación: Integración de datos, ajuste de pesos, escalabilidad, personalización y procesamiento en tiempo real.
 
-## Cita
+## Ejecución del Proyecto
 
-Tian, Y., Zheng, B., Wang, Y., Zhang, Y., & Wu, Q. (2019). Sistema de recomendación personalizada de bibliotecas universitarias basado en un algoritmo de recomendación híbrido. _Procedia Computer Science_, 163, 484-490. Disponible en línea: [aquí](https://www.sciencedirect.com/science/article/pii/S2212827119307401).
+Para ejecutar este proyecto, se ha incluido un archivo `startup.sh` en la raíz del repositorio. Este script se encargará de instalar todas las dependencias necesarias y de iniciar la aplicación Flask. Sigue estos pasos para ejecutar el proyecto:
+
+1. Asegúrate de que tienes los permisos adecuados para ejecutar el archivo `startup.sh`. Si no los tienes, puedes conceder los permisos con el siguiente comando:
+
+   ```bash
+   chmod +x startup.sh
+   ```
+2. Luego ejecuta el archivo con el siguiente comando:
+
+   ```bash
+   ./startup.sh
+   ```
