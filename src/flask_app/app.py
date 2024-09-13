@@ -8,7 +8,7 @@ import time
 import random
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from recommendation_system.load import movies
+from recommendation_system.load import *
 from recommendation_system.weighted_hybrid_system import weighted_hybrid_recommendations
 
 app = Flask(__name__)
@@ -161,9 +161,9 @@ cold_start_focus = {
     'demographic': 0.4
 }
 big_amount_of_users = {
-    'collaborative': 0.7,
-    'content': 0.3,
-    'demographic': 0.2
+    'collaborative': 0.3,
+    'content': 0.7,
+    'demographic': 0
 }
 balanced = {
     'collaborative': 0.33,
@@ -176,14 +176,14 @@ def get_recommendations(user_id):
     headers = ['UserID', 'MovieID', 'Rating', 'Timestamp']
     ratings = read_data_from_file(RATING_DATA_FILE, headers)
     user_ratings = [r for r in ratings if int(r['UserID']) == user_id]
-    
+
     if len(user_ratings) < 5: 
         strategy = 'cold_start'
     elif len(ratings) > 10000:
         strategy = 'large_user_base'
     else:
         strategy = 'balanced'
-    
+    print("Using strategy: "+strategy)
     if strategy == 'cold_start':
         weights = cold_start_focus
     elif strategy == 'large_user_base':

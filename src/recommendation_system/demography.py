@@ -3,21 +3,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.cluster import KMeans
 from recommendation_system.load import *
 
-movies['Genres'] = movies['Genres'].str.split('|')
-movies = movies.explode('Genres')
-movies = pd.get_dummies(movies, columns=['Genres'], prefix='', prefix_sep='')
-
-movies = movies.drop_duplicates(subset=['MovieID'])
-
-movie_genres = movies.set_index('MovieID').drop(columns=['Title'])
-
-ratings_users = pd.merge(ratings, users, on='UserID')
-
-user_profiles = pd.get_dummies(users, columns=['Gender', 'Age', 'Occupation'])
-
-n_clusters = 5
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-user_profiles['Cluster'] = kmeans.fit_predict(user_profiles.drop(columns=['UserID', 'Zip-code']))
 
 def recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies):
     """
@@ -49,6 +34,7 @@ def recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies
     
     return recommended_movies_df[['Title', 'Score']].reset_index()
 
+
 def Get_movies_by_demography(user_id):
     """
     Retrieves movie recommendations for a user based on their demographic profile.
@@ -59,6 +45,27 @@ def Get_movies_by_demography(user_id):
     Returns:
     - dict: A dictionary where the keys are MovieIDs and the values are the recommendation scores.
     """
+
+
+    movies = load_movies()
+    ratings = load_ratings()
+    users = load_users()
+
+    movies['Genres'] = movies['Genres'].str.split('|')
+    movies = movies.explode('Genres')
+    movies = pd.get_dummies(movies, columns=['Genres'], prefix='', prefix_sep='')
+
+    movies = movies.drop_duplicates(subset=['MovieID'])
+
+    movie_genres = movies.set_index('MovieID').drop(columns=['Title'])
+    ratings_users = pd.merge(ratings, users, on='UserID')
+    user_profiles = pd.get_dummies(users, columns=['Gender', 'Age', 'Occupation'])
+
+    n_clusters = 5
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    user_profiles['Cluster'] = kmeans.fit_predict(user_profiles.drop(columns=['UserID', 'Zip-code']))
+
+
     recommendations_df = recommend_movies(user_id, ratings_users, user_profiles, movie_genres, movies)
     recommendations_dict = pd.Series(recommendations_df['Score'].values, index=recommendations_df['MovieID']).to_dict()
     
