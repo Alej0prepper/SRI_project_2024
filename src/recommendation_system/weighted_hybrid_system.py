@@ -1,3 +1,4 @@
+import pandas as pd
 from recommendation_system.collaborative_by_items import get_movies_by_collaborative
 from recommendation_system.content import Get_movies_by_content
 from recommendation_system.demography import Get_movies_by_demography
@@ -34,14 +35,14 @@ def weighted_hybrid_recommendations(user_id, weights):
         print("Can't get demography recommendations for user")
         demographic_scores = dict()
 
-    
-
-    combined_scores = {}
+    # Get the movies already rated by the user to exclude them from recommendations
+    ratings = load_ratings()
     rated_movies = set(ratings[ratings['UserID'] == user_id]['MovieID'])
 
+    combined_scores = {}
     for item in set(collaborative_scores.keys()).union(content_scores.keys(), demographic_scores.keys()):
         if item in rated_movies:
-            continue    
+            continue  # Skip movies the user has already rated
 
         collab_score = collaborative_scores.get(item, 0)
         content_score = content_scores.get(item, 0)
@@ -53,24 +54,29 @@ def weighted_hybrid_recommendations(user_id, weights):
             weights.get('demographic', 0) * float(demo_score)
         )
 
-
     sorted_items = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)
-
     return sorted_items
 
 # if __name__ == "__main__":
+#     # Load data
+#     movies = load_movies()
+    
+#     # Define user and weights for recommendation sources
 #     user_id = 1
+#     weights = {
+#         'collaborative': 0.5,
+#         'content': 0.3,
+#         'demographic': 0.2
+#     }
 
-#     recommendations = weighted_hybrid_recommendations(user_id)
+#     # Get weighted hybrid recommendations
+#     recommendations = weighted_hybrid_recommendations(user_id, weights)
 
-#     valid_recommendations = [(item_id, score) for item_id, score in recommendations if not math.isnan(score)]
+#     # Get the top 10 recommendations
+#     top_recommendations = recommendations[:10]
 
-#     top_recommendations = sorted(valid_recommendations, key=lambda x: x[1], reverse=True)[:10]
-
+#     # Convert to DataFrame for easier merging and displaying
 #     recommendations_df = pd.DataFrame(top_recommendations, columns=['MovieID', 'Score'])
 
+#     # Merge with movie titles
 #     recommendations_with_titles = recommendations_df.merge(movies[['MovieID', 'Title']], on='MovieID', how='left')
-
-#     print("Top 10 recommendations (MovieID, Title, Score):")
-#     for index, row in recommendations_with_titles.iterrows():
-#         print(f"Movie {row['MovieID']}: ({row['Title']}): {row['Score']:.4f}")

@@ -17,7 +17,6 @@ user_movie_ratings = user_movie_ratings.drop(columns=['Title', 'Timestamp'])
 
 # Create user profiles, filling missing values with 0
 user_profiles = user_movie_ratings.groupby('UserID').mean().drop(columns=['MovieID', 'Rating']).fillna(0)
-
 def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_recommendations=200):
     """
     Recommends movies to a user based on the similarity between their profile and the genres of movies.
@@ -44,7 +43,7 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     similarity_df = pd.DataFrame(cosine_sim.T, index=movie_genres.index, columns=['Similarity'])
     
     # Remove movies the user has already rated
-    watched_movies = ratings[ratings['UserID'] == user_id]['MovieID']
+    watched_movies = ratings[ratings['UserID'] == user_id]['MovieID'].unique()
     similarity_df = similarity_df.drop(index=watched_movies, errors='ignore')
     
     # Sort movies by similarity
@@ -85,6 +84,7 @@ def recommend_movies(user_id, user_profiles, movie_genres, ratings, movies, n_re
     filtered_recommended_movies = recommended_movies_exploded.loc[
         recommended_movies_exploded.groupby('Reason')['NormalizedSimilarity'].idxmax()
     ]
+    
     # Return the normalized similarity score and other details
     return filtered_recommended_movies[['Title', 'NormalizedSimilarity', 'Reason', 'MovieID']].rename(columns={'NormalizedSimilarity': 'Similarity'})
 
